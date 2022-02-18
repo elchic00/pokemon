@@ -4,22 +4,7 @@ Created on Mon Feb 8
 """
 import random
 from rich import print
-from dataclasses import dataclass, field
-
-
-@dataclass
-class Player:
-    def __init__(self, name, gender, nature, pokemon_list, bag, money):
-        self.name = name
-        self.gender = gender
-        self.nature = nature
-        self.pokemon_list = pokemon_list
-        self.bag = bag
-        self.money = money
-
-    def print_poke_list(self):
-        for i in range(len(self.pokemon_list)):
-            print(self.pokemon_list[i].name)
+from dataclasses import dataclass, field, asdict
 
 
 @dataclass
@@ -30,6 +15,20 @@ class Pokemon:
     nature: str = 'normal'
     moves: dict[str:int] = field(default_factory=dict)
     health: int = 100
+
+
+@dataclass
+class Player:
+    name: str = "Player"
+    gender: str = random.choice(['Male', 'Female'])
+    nature: str = 'Fun'
+    pokemon_list: list[Pokemon] = field(default_factory=list)
+    bag: dict[str:int] = field(default_factory=dict)
+    money: int = 10000
+
+    def print_poke_list(self):
+        for i in range(len(self.pokemon_list)):
+            print(self.pokemon_list[i].name)
 
 
 class Grid:
@@ -144,11 +143,10 @@ def choose_starter_pokemon(pokemon):
 
 # 0 = cant access, 1 =  empty land, 2 = pokemon, 3 = pokeball, 4 = CPU
 if __name__ == "__main__":
-    p = Pokemon()
-    print(p)
     player1 = starting_player_info()
-    print(player1)
+    print(asdict(player1))
     grid = Grid()
+    # print(grid.curr_pos)
     # fuego = Pokemon('Fuego', 'female', "Charzard", 'Fire', {'Fire blast': 75, 'Flamethrower': 50, 'Claw': 35}, 150)
     player1.print_poke_list()
     throw_pokeball(player1, player1.pokemon_list[0])

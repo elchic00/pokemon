@@ -23,6 +23,7 @@ def generate_rand_pokemon():
     rocky = Pokemon('rocky', 'male', 'Geodude', 'Rock', {'Rock-throw': 25, 'head-butt': 30})
     mew = Pokemon('mew', 'neutral', 'Mew', 'Psychic', {'Mind-beam': 40, 'Psychic-slam': 35})
     snore = Pokemon('snore', 'male', 'Snorlax', 'Normal', {'Body-slam': 40, 'Slap': 30})
+    rocky = Pokemon('rocky', 'female', 'Onyx', 'Normal', {'Body-slam': 40, 'Slap': 30})
     return random.choice([fuego, rocky, mew, snore])
 
 
@@ -56,7 +57,7 @@ class GridSquare:
         if self.occupied_with == 0:
             return "\U0001F6B7"
         if self.occupied_with == 1:
-            return random.choice(["\U0001F340", "\U0001F334"])
+            return random.choice(["\U0001F334"])
         if self.occupied_with == 2:
             return '\U0001F994'
         if self.occupied_with == 3:
@@ -143,9 +144,12 @@ def throw_pokeball(player, pokemon):
 
 
 def use_potion(player, pokemon):
-    if player.bag is not None:
+    if player.bag['potion'] > 0:
         player.bag['potion'] -= 1
         pokemon.health += 20
+        print(f'Your pokemon now has {pokemon.health} health!')
+    else:
+        print("You do not have any more potions!")
 
 
 def battle(player):  # player2 will always be a CPU for now
@@ -154,18 +158,26 @@ def battle(player):  # player2 will always be a CPU for now
     print(f'You will be playing with {player.pokemon_list[0].name} and battling {cpu.pokemon_list.name} ')
     print("You have the first move!")
     while player.pokemon_list is not None and cpu.pokemon_list.health >= 0:
-        pokemon = player.pokemon_list[0]
+        pokemon = player.pokemon_list[0]  # We will always battle with your pokemon in order of your list.
         move = input(
-            f"Do you want to use move 1 ({next(iter(pokemon.moves))}), move 2 ({list(pokemon.moves.keys())[1]}), or use a potion? ")
+            f"Do you want to use move 1 ({next(iter(pokemon.moves))}), move 2 ({list(pokemon.moves.keys())[1]}), or use a potion (P)? ")
         if move == '1':
             cpu.pokemon_list.health -= list(pokemon.moves.values())[0]
             print(f"Their pokemon has {cpu.pokemon_list.health} health left")
         elif move == '2':
             cpu.pokemon_list.health -= list(pokemon.moves.values())[1]
             print(f"Their pokemon has {cpu.pokemon_list.health} health left")
+        elif move.upper() == 'P' or pokemon.health <= 0:
+            use = input("Do you want to use a potion, Y or N?")
+            if use.upper() == 'Y':
+                use_potion(player, pokemon)
+            else:
+                print("Your pokemon has fainted! You will now battle with your next pokemon.")
+                player.pokemon_list.pop(0)
     print(f"Good job, you defeated {cpu.name}!")
     cpu.pokemon_list.health = 100
     player.pokemon_list.append(cpu.pokemon_list)
+    print(f"You won a {pokemon.type_of_pokemon}! Congrats!")
 
 
 def starting_player_info():
@@ -200,7 +212,6 @@ def playing_game(player):
     grid = Grid()
     while player.pokemon_list is not None and len(player.pokemon_list) < 4:
         traverse_grid(grid)
-        print(f"You have {len(player.pokemon_list)} pokemon ", player.print_poke_list())
     print("Game over! You have 4 pokemon, or all of yours have lost. Thanks for playing", ":smile:")
 
 

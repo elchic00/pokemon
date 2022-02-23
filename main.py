@@ -131,7 +131,7 @@ class CpuPlayer:
 
 def throw_pokeball(player, pokemon):
     player.bag['pokeball'] -= 1
-    if pokemon.health >= 75:
+    if pokemon.health >= 50:
         if random.random() < .35:
             print(f'Congrats, you captured {pokemon.type_of_pokemon}! His name is {pokemon.name}.')
             player.pokemon_list.append(pokemon)
@@ -139,7 +139,7 @@ def throw_pokeball(player, pokemon):
         else:
             print(f'You did not capture {pokemon.type_of_pokemon}!')
             return False
-    elif pokemon.health < 45:
+    elif pokemon.health < 50:
         if random.random() <= .70:
             print(f'Congrats, you captured {pokemon.type_of_pokemon}! His name is {pokemon.name}.')
             player.pokemon_list.append(pokemon)
@@ -163,8 +163,7 @@ def battle(player: Player, opp: str):  # player2 will always be a CPU for now
         if opp == 'cpu':
             cpu = CpuPlayer()
             print(cpu.fact)
-            print(
-                f'You will be starting the battle with {player.pokemon_list[0].name} (a {player.pokemon_list[0].type_of_pokemon}), and battling {cpu.pokemon.name} (a {cpu.pokemon.type_of_pokemon})')
+            print(f'You will be starting the battle with {player.pokemon_list[0].name} (a {player.pokemon_list[0].type_of_pokemon}), and battling {cpu.pokemon.name} (a {cpu.pokemon.type_of_pokemon})')
             cpu_pokemon = cpu.pokemon
         else:
             cpu_pokemon = generate_rand_pokemon()
@@ -252,6 +251,7 @@ def playing_game(player):
         traverse_grid(grid)
     if len(player.pokemon_list) >= 4:
         print("Game over! You captured 4 pokemon. Thanks for playing!", ":smile:")
+        print(player.poke_list_names())
     else:
         print("Game over! You list all of your pokemon. Thanks for playing!", ":smile:")
 
@@ -259,6 +259,5 @@ def playing_game(player):
 # 0 = cant access, 1 =  empty land, 2 = pokemon, 3 = pokeball, 4 = CPU
 if __name__ == "__main__":
     player1 = starting_player_info()
-    player1.pokemon_list.append(generate_rand_pokemon())
     print(f"Hello {player1.name}, get ready to play Pokemon Py!")
     playing_game(player1)

@@ -6,6 +6,7 @@ A Pokemon clone for the terminal.
 import random
 from rich import print
 from dataclasses import dataclass, field, asdict
+from pprint import pprint
 
 
 @dataclass
@@ -24,7 +25,9 @@ def generate_rand_pokemon():
     mew = Pokemon('mew', 'neutral', 'Mew', 'Psychic', {'Mind-beam': 20, 'Psychic-slam': 25})
     snore = Pokemon('snore', 'male', 'Snorlax', 'Normal', {'Body-slam': 20, 'Slap': 15})
     rocky = Pokemon('rocky', 'female', 'Onyx', 'Normal', {'Body-slam': 20, 'Slap': 15})
-    return random.choice([fuego, rocky, mew, snore])
+    coolio = Pokemon('coolio', 'male', 'Squirtle', 'Water', {"Hydropump": 35, 'Bite': 20})
+    charred = Pokemon('charred', 'female', 'Charmander', 'Fire', {'Bite': 20, 'Fire-blast': 25})
+    return random.choice([fuego, rocky, mew, snore, coolio, charred])
 
 
 @dataclass
@@ -36,14 +39,18 @@ class Player:
     bag: dict[str:int] = field(default_factory=dict)
     money: int = 10000
 
-    def print_poke_list(self):
+    def poke_list_names(self):
         names = []
         for poke in enumerate(self.pokemon_list):
             names.append(poke[1].name)
-        print(names)
+        return names
 
-    def __repr__(self):
-        return "\U0001FAE1"
+    def change_poke(self, name):
+        names = self.poke_list_names()
+        ind = names.index(name)
+        return self.pokemon_list[ind]
+
+    def __repr__(self): return "\U0001FAE1"
 
 
 class GridSquare:
@@ -53,21 +60,14 @@ class GridSquare:
         self.terrain = random.choice(['grass', 'water', 'concrete'])
         self.occupied_with = random.choices(possible_options, distribution)[0]
 
-    def __repr__(self):  # 0 = cant access, 1 =  empty land, 2 = pokemon, 3 = pokeball, 4 = CPU, -1 = visited
-        if self.occupied_with == 0:
-            return "\U0001F6B7"
-        if self.occupied_with == 1:
-            return random.choice(["\U0001F334"])
-        if self.occupied_with == 2:
-            return '\U0001F994'
-        if self.occupied_with == 3:
-            return "\U000026D4"
-        if self.occupied_with == 4:
-            return "\U0001F94A"
-        if self.occupied_with == Player:
-            return "\U0001FAE1"
-        if self.occupied_with == -1:
-            return "\U00002705"
+    def __repr__(self):
+        if self.occupied_with == 0: return "\U0001F6B7"
+        if self.occupied_with == 1: return "\U0001F334"
+        if self.occupied_with == 2: return '\U0001F994'
+        if self.occupied_with == 3: return "\U000026D4"
+        if self.occupied_with == 4: return "\U0001F94A"
+        if self.occupied_with == Player: return "\U0001FAE1"
+        if self.occupied_with == -1: return "\U00002705"
 
 
 class Grid:
@@ -78,11 +78,12 @@ class Grid:
         self.row_pos, self.col_pos = 0, 0
 
     def print_grid(self):
-        print(self.grid)
+        for row in self.grid:
+            print(" ".join(map(str, row)))
 
 
 # Dont need to keep track of visited cells, but could be good practice to use the grid teq mentioned by professor.
-def traverse_grid(grid):
+def traverse_grid(grid):  # 0 = cant access, 1 =  empty land, 2 = pokemon, 3 = pokeball, 4 = CPU
     grid.print_grid()
     dir_row, dir_col = [-1, 0, 1, 0], [0, 1, 0, -1]  # North[0], east[1], south[2], west[3]
     made_move = False
@@ -100,17 +101,18 @@ def traverse_grid(grid):
         if direction.upper() == 'A':
             rr = grid.row_pos + dir_row[3]
             cc = grid.col_pos + dir_col[3]
-        if rr < 0 or cc < 0 or rr >= 8 or cc >= 8 or grid.grid[rr][cc].occupied_with == 0:  # 8 is size of rows and cols or edge of grid
+        if rr < 0 or cc < 0 or rr >= 8 or cc >= 8 or grid.grid[rr][
+            cc].occupied_with == 0:  # 8 is size of rows and cols or edge of grid
             direction = input(
                 "You cannot move there or were already there. Try again, Enter W/A/S/D to move in a different direction: ")
         else:
             if grid.grid[rr][cc].occupied_with == 4:
-                battle(player1)
+                battle(player1, 'cpu')
             if grid.grid[rr][cc].occupied_with == 3:
                 player1.bag['pokeball'] += 1
-                print("Sweet, you found a pokeball!! [blue]")
+                print("Sweet, you found a pokeball!!", "[red]")
             if grid.grid[rr][cc].occupied_with == 2:
-                wild_pokemon(player1)
+                battle(player1, 'wild pokemon')
             grid.grid[grid.row_pos][grid.col_pos] = GridSquare()
             grid.grid[grid.row_pos][grid.col_pos].occupied_with = -1
             grid.grid[rr][cc] = player1
@@ -129,21 +131,25 @@ class CpuPlayer:
 
 def throw_pokeball(player, pokemon):
     player.bag['pokeball'] -= 1
-    if pokemon.health > 75:
+    if pokemon.health >= 75:
         if random.random() < .35:
-            print(f'Congrats, you captured {pokemon.type_of_pokemon}!')
-            return player.pokemon_list.append(pokemon)
+            print(f'Congrats, you captured {pokemon.type_of_pokemon}! His name is {pokemon.name}.')
+            player.pokemon_list.append(pokemon)
+            return True
         else:
-            return print(f'You did not capture {pokemon.type_of_pokemon}!')
-    elif pokemon.health < 40:
-        if random.random() <= .75:
-            print(f'Congrats, you captured {pokemon.type_of_pokemon}!')
-            return player.pokemon_list.append(pokemon)
+            print(f'You did not capture {pokemon.type_of_pokemon}!')
+            return False
+    elif pokemon.health < 45:
+        if random.random() <= .70:
+            print(f'Congrats, you captured {pokemon.type_of_pokemon}! His name is {pokemon.name}.')
+            player.pokemon_list.append(pokemon)
+            return True
         else:
-            return print(f'You did not capture {pokemon.type_of_pokemon}!')
+            print(f'You did not capture {pokemon.type_of_pokemon}!')
+            return False
 
 
-def use_potion(player, pokemon):
+def use_potion(player: Player, pokemon: Pokemon):
     if player.bag['potion'] > 0:
         player.bag['potion'] -= 1
         pokemon.health += 40
@@ -152,37 +158,72 @@ def use_potion(player, pokemon):
         print("You do not have any more potions!")
 
 
-def battle(player):  # player2 will always be a CPU for now
-    cpu = CpuPlayer()
-    print(cpu.fact)
-    print(f'You will be starting the battle with {player.pokemon_list[0].name} (a {player.pokemon_list[0].type_of_pokemon}), and battling {cpu.pokemon.name} (a {cpu.pokemon.type_of_pokemon})')
-    print("You have the first move!")
-    while player.pokemon_list is not None and cpu.pokemon.health > 0:
+def battle(player: Player, opp: str):  # player2 will always be a CPU for now
+    try:
+        if opp == 'cpu':
+            cpu = CpuPlayer()
+            print(cpu.fact)
+            print(
+                f'You will be starting the battle with {player.pokemon_list[0].name} (a {player.pokemon_list[0].type_of_pokemon}), and battling {cpu.pokemon.name} (a {cpu.pokemon.type_of_pokemon})')
+            cpu_pokemon = cpu.pokemon
+        else:
+            cpu_pokemon = generate_rand_pokemon()
+            print(f"Get ready fight a wild {cpu_pokemon.type_of_pokemon}!")
+        print("You have the first move!")
+        caught, run = False, False
         pokemon = player.pokemon_list[0]  # We will always battle with your pokemon in order of your list.
-        move = input(
-            f"Do you want to use move 1 ({next(iter(pokemon.moves))}), move 2 ({list(pokemon.moves.keys())[1]}), or use a potion (P)? ")
-        if move == '1':
-            cpu.pokemon.health -= list(pokemon.moves.values())[0]
-            print(f"Their pokemon has {cpu.pokemon.health} health left")
-        elif move == '2':
-            cpu.pokemon.health -= list(pokemon.moves.values())[1]
-            print(f"Their pokemon has {cpu.pokemon.health} health left")
-        elif move.upper() == 'P':
-            use_potion(player, pokemon)
-        if pokemon.health <= 0 and player.bag['potion'] != 0:
-            use = input("Your pokemon is about to faint, do you want to use a potion? (Y or N)")
-            if use == 'Y': use_potion(player, pokemon)
+        while player.pokemon_list is not None and cpu_pokemon.health > 0:
+            if opp == 'cpu':
+                  move = input(f"Do you want to use move 1 {next(iter(pokemon.moves))} (1), move 2 {list(pokemon.moves.keys())[1]} (2), use a potion (P), run (R), or switch pokemon (S)? ")
             else:
-                rip = player.pokemon_list.pop(0)
-                print(f"{rip.name} has fainted!")
-                if player.pokemon_list is not None: print(f'You will now fight with {player.pokemon_list[0].name}!')
-        cpu_move = random.choice(list(cpu.pokemon.moves.keys()))
-        pokemon.health -= cpu.pokemon.moves[cpu_move]
-        print(f"You were hit with {cpu_move} for {cpu.pokemon.moves[cpu_move]} health points! You have {pokemon.health} health left.")
-    print(f"Good job, you defeated {cpu.name}!")
-    cpu.pokemon.health = 100
-    player.pokemon_list.append(cpu.pokemon)
-    print(f"You won a {pokemon.type_of_pokemon}! Congrats!")
+                move = input(f"Do you want to use move 1 {next(iter(pokemon.moves))} (1), move 2 {list(pokemon.moves.keys())[1]} (2), throw a pokeball (T), use a potion (P), run (R), or switch pokemon (S)? ")
+            if move == '1':
+                cpu_pokemon.health -= list(pokemon.moves.values())[0]
+                print(f"You hit them with {list(pokemon.moves.keys())[0]}. Their pokemon has {cpu_pokemon.health} health left")
+                if cpu_pokemon.health <= 0: continue
+            elif move == '2':
+                cpu_pokemon.health -= list(pokemon.moves.values())[1]
+                print(f"You hit them with {list(pokemon.moves.keys())[1]}. Their pokemon has {cpu_pokemon.health} health left")
+                if cpu_pokemon.health <= 0: continue
+            elif move.upper() == 'P':
+                use_potion(player, pokemon)
+            elif move.upper() == 'R':
+                run = True
+                break
+            elif move.upper() == 'S':
+                print(player.poke_list_names())
+                change = input(f"Which pokemon do you want to switch to? ")
+                pokemon = player.change_poke(change)
+                print(f'{pokemon.name} has {pokemon.health} left.')
+            elif move.upper() == 'T':
+                caught = throw_pokeball(player, cpu_pokemon)
+                if caught is True:
+                    break
+            cpu_move = random.choice(list(cpu_pokemon.moves.keys()))
+            pokemon.health -= cpu_pokemon.moves[cpu_move]
+            print(
+                f"You were hit with {cpu_move} for {cpu_pokemon.moves[cpu_move]} HP! {pokemon.name} has {pokemon.health} health left.")
+            if pokemon.health <= 0 and player.bag['potion'] != 0:
+                use = input("Your pokemon is about to faint, do you want to use a potion? (Y or N)")
+                if use.upper() == 'Y':
+                    use_potion(player, pokemon)
+                else:
+                    rip = player.pokemon_list.pop(0)
+                    print(f"{rip.name} has fainted!")
+                    if player.pokemon_list is not None: print(f'You will now fight with {player.pokemon_list[0].name}!')
+        if caught is False and run is False:
+            if opp == 'cpu':
+                player.money += cpu.cash_award
+                print(f"Good job, you defeated {cpu.name}'s pokemon! You won their pokemon and ${cpu.cash_award}")
+
+            print(f"Good job, you defeated {cpu_pokemon.name}!")
+            cpu_pokemon.health = 100
+            player.pokemon_list.append(cpu_pokemon)
+            print(f"You won a {cpu_pokemon.type_of_pokemon}! Congrats!")
+        elif run is True:
+            print("You ran from the battle!")
+    except:
+        print("Your done with this battle!")
 
 
 def starting_player_info():
@@ -191,7 +232,7 @@ def starting_player_info():
     nature = input("How would you describe your nature?: ")
     starter_pokemon = input("Which pokemon do you want to start with? P - Pikachu, C - Charmander, or S - Squirtle?: ")
     starter_pokemon = choose_starter_pokemon(starter_pokemon)
-    return Player(player_name, gender, nature, [starter_pokemon], {'potion': 2, 'pokeball': 1}, 10000)
+    return Player(player_name, gender, nature, [starter_pokemon], {'potion': 3, 'pokeball': 3}, 10000)
 
 
 def choose_starter_pokemon(starter_pokemon):
@@ -208,21 +249,19 @@ def choose_starter_pokemon(starter_pokemon):
         return Pokemon(name, random.choice(["Male", "Female"]), "Squirtle", 'Water', {'Hydropump': 40, 'Tackle': 25})
 
 
-def wild_pokemon(player):
-    pokemon = generate_rand_pokemon()
-    print(f"Get ready to fight {pokemon.name}!")
-
-
 def playing_game(player):
     grid = Grid()
-    while player.pokemon_list is not None and len(player.pokemon_list) < 4:
+    while len(player.pokemon_list) != 0 and len(player.pokemon_list) < 4:
         traverse_grid(grid)
-    print("Game over! You have 4 pokemon, or all of yours have lost. Thanks for playing", ":smile:")
-    player.print_poke_list()
+    if len(player.pokemon_list) >= 4:
+        print("Game over! You captured 4 pokemon. Thanks for playing!", ":smile:")
+    else:
+        print("Game over! You list all of your pokemon. Thanks for playing!", ":smile:")
 
 
 # 0 = cant access, 1 =  empty land, 2 = pokemon, 3 = pokeball, 4 = CPU
 if __name__ == "__main__":
     player1 = starting_player_info()
-    print("Hello [bold blue]" + player1.name + " and Rich python[/bold blue]!", )
+    player1.pokemon_list.append(generate_rand_pokemon())
+    print(f"Hello {player1.name}, get ready to play Pokemon Py!")
     playing_game(player1)

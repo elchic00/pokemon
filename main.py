@@ -21,13 +21,13 @@ class Pokemon:
 
 def generate_rand_pokemon():
     fuego = Pokemon('fuego', 'female', "Charzard", 'Fire', {'Flamethrower': 20, 'Claw': 15})
-    rocky = Pokemon('rocky', 'male', 'Geodude', 'Rock', {'Rock-throw': 20, 'head-butt': 15})
+    rocko = Pokemon('rocky', 'male', 'Geodude', 'Rock', {'Rock-throw': 20, 'head-butt': 15})
     mew = Pokemon('mew', 'neutral', 'Mew', 'Psychic', {'Mind-beam': 20, 'Psychic-slam': 25})
     snore = Pokemon('snore', 'male', 'Snorlax', 'Normal', {'Body-slam': 20, 'Slap': 15})
     rocky = Pokemon('rocky', 'female', 'Onyx', 'Normal', {'Body-slam': 20, 'Slap': 15})
     coolio = Pokemon('coolio', 'male', 'Squirtle', 'Water', {"Hydropump": 35, 'Bite': 20})
     charred = Pokemon('charred', 'female', 'Charmander', 'Fire', {'Bite': 20, 'Fire-blast': 25})
-    return random.choice([fuego, rocky, mew, snore, coolio, charred])
+    return random.choice([fuego, rocko, mew, snore, rocky, coolio, charred])
 
 
 @dataclass
@@ -41,8 +41,8 @@ class Player:
 
     def poke_list_names(self):
         names = []
-        for poke in enumerate(self.pokemon_list):
-            names.append(poke[1].name)
+        for poke in self.pokemon_list:
+            names.append(poke.name)
         return names
 
     def change_poke(self, name):
@@ -153,7 +153,7 @@ def use_potion(player: Player, pokemon: Pokemon):
     if player.bag['potion'] > 0:
         player.bag['potion'] -= 1
         pokemon.health += 40
-        print(f'Your pokemon now has {pokemon.health} health!')
+        print(f'{pokemon.name} now has {pokemon.health} health!')
     else:
         print("You do not have any more potions!")
 
@@ -173,13 +173,12 @@ def battle(player: Player, opp: str):  # player2 will always be a CPU for now
         caught, run = False, False
         pokemon = player.pokemon_list[0]  # We will always battle with your pokemon in order of your list.
         while player.pokemon_list is not None and cpu_pokemon.health > 0:
-            if opp == 'cpu':
-                  move = input(f"Do you want to use move 1 {next(iter(pokemon.moves))} (1), move 2 {list(pokemon.moves.keys())[1]} (2), use a potion (P), run (R), or switch pokemon (S)? ")
-            else:
-                move = input(f"Do you want to use move 1 {next(iter(pokemon.moves))} (1), move 2 {list(pokemon.moves.keys())[1]} (2), throw a pokeball (T), use a potion (P), run (R), or switch pokemon (S)? ")
+            if opp == 'cpu': move = input(f"Do you want to use move 1 {next(iter(pokemon.moves))} (1), move 2 {list(pokemon.moves.keys())[1]} (2), use a potion (P), switch pokemon (S), or run (R)? ")
+            else: move = input(f"Do you want to use move 1 {next(iter(pokemon.moves))} (1), move 2 {list(pokemon.moves.keys())[1]} (2), use a potion (P), throw a pokeball (T), switch pokemon (S), or run (R)? ")
+
             if move == '1':
                 cpu_pokemon.health -= list(pokemon.moves.values())[0]
-                print(f"You hit them with {list(pokemon.moves.keys())[0]}. Their pokemon has {cpu_pokemon.health} health left")
+                print(f"You hit them with {list(pokemon.moves.keys())[0]}. {cpu_pokemon.name} has {cpu_pokemon.health} health left")
                 if cpu_pokemon.health <= 0: continue
             elif move == '2':
                 cpu_pokemon.health -= list(pokemon.moves.values())[1]
@@ -201,8 +200,7 @@ def battle(player: Player, opp: str):  # player2 will always be a CPU for now
                     break
             cpu_move = random.choice(list(cpu_pokemon.moves.keys()))
             pokemon.health -= cpu_pokemon.moves[cpu_move]
-            print(
-                f"You were hit with {cpu_move} for {cpu_pokemon.moves[cpu_move]} HP! {pokemon.name} has {pokemon.health} health left.")
+            print(f"You were hit with {cpu_move} for {cpu_pokemon.moves[cpu_move]} HP! {pokemon.name} has {pokemon.health} health left.")
             if pokemon.health <= 0 and player.bag['potion'] != 0:
                 use = input("Your pokemon is about to faint, do you want to use a potion? (Y or N)")
                 if use.upper() == 'Y':
@@ -214,12 +212,11 @@ def battle(player: Player, opp: str):  # player2 will always be a CPU for now
         if caught is False and run is False:
             if opp == 'cpu':
                 player.money += cpu.cash_award
-                print(f"Good job, you defeated {cpu.name}'s pokemon! You won their pokemon and ${cpu.cash_award}")
+                print(f"Good job, you defeated {cpu.name}'s! You won ${cpu.cash_award}")
 
-            print(f"Good job, you defeated {cpu_pokemon.name}!")
+            print(f"You defeated and won {cpu_pokemon.name}! Welcome your new pokemon to the crew.")
             cpu_pokemon.health = 100
             player.pokemon_list.append(cpu_pokemon)
-            print(f"You won a {cpu_pokemon.type_of_pokemon}! Congrats!")
         elif run is True:
             print("You ran from the battle!")
     except:
@@ -251,7 +248,7 @@ def choose_starter_pokemon(starter_pokemon):
 
 def playing_game(player):
     grid = Grid()
-    while len(player.pokemon_list) != 0 and len(player.pokemon_list) < 4:
+    while 0 < len(player.pokemon_list) < 4:
         traverse_grid(grid)
     if len(player.pokemon_list) >= 4:
         print("Game over! You captured 4 pokemon. Thanks for playing!", ":smile:")

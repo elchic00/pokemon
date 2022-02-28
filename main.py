@@ -73,8 +73,7 @@ class GridSquare:
 class Grid:
     def __init__(self):
         self.grid = [[GridSquare() for i in range(8)] for i in range(8)]
-        self.grid[0][
-            0] = GridSquare.occupied_with = player1  # The starting player is represented as 9, and visited squares will be marked as -1.
+        self.grid[0][0] = GridSquare.occupied_with = player1  # The starting player is represented as 9, and visited squares will be marked as -1.
         self.row_pos, self.col_pos = 0, 0
 
     def print_grid(self):
@@ -103,8 +102,7 @@ def traverse_grid(grid):  # 0 = cant access, 1 =  empty land, 2 = pokemon, 3 = p
             cc = grid.col_pos + dir_col[3]
         if rr < 0 or cc < 0 or rr >= 8 or cc >= 8 or grid.grid[rr][
             cc].occupied_with == 0:  # 8 is size of rows and cols or edge of grid
-            direction = input(
-                "You cannot move there or were already there. Try again, Enter W/A/S/D to move in a different direction: ")
+            direction = input("You cannot move there. Try again, Enter W/A/S/D to move in a different direction: ")
         else:
             if grid.grid[rr][cc].occupied_with == 4:
                 battle(player1, 'cpu')
@@ -158,7 +156,7 @@ def use_potion(player: Player, pokemon: Pokemon):
         print("You do not have any more potions!")
 
 
-def battle(player: Player, opp: str):  # player2 will always be a CPU for now
+def battle(player: Player, opp: str):
     try:
         if opp == 'cpu':
             cpu = CpuPlayer()
@@ -170,7 +168,7 @@ def battle(player: Player, opp: str):  # player2 will always be a CPU for now
             print(f"Get ready fight a wild {cpu_pokemon.type_of_pokemon}!")
         print("You have the first move!")
         caught, run = False, False
-        pokemon = player.pokemon_list[0]  # We will always battle with your pokemon in order of your list.
+        pokemon = player.pokemon_list[0]  # We will always start a battle with your first pokemon.
         while player.pokemon_list is not None and cpu_pokemon.health > 0:
             if opp == 'cpu': move = input(f"Do you want to use move 1 {next(iter(pokemon.moves))} (1), move 2 {list(pokemon.moves.keys())[1]} (2), use a potion (P), switch pokemon (S), or run (R)? ")
             else: move = input(f"Do you want to use move 1 {next(iter(pokemon.moves))} (1), move 2 {list(pokemon.moves.keys())[1]} (2), use a potion (P), throw a pokeball (T), switch pokemon (S), or run (R)? ")
@@ -192,7 +190,7 @@ def battle(player: Player, opp: str):  # player2 will always be a CPU for now
                 print(player.poke_list_names())
                 change = input(f"Which pokemon do you want to switch to? ")
                 pokemon = player.change_poke(change)
-                print(f'{pokemon.name} has {pokemon.health} left.')
+                print(f'{pokemon.name} has {pokemon.health} left. Get ready to fight!')
             elif move.upper() == 'T':
                 caught = throw_pokeball(player, cpu_pokemon)
                 if caught is True:
@@ -201,6 +199,7 @@ def battle(player: Player, opp: str):  # player2 will always be a CPU for now
             pokemon.health -= cpu_pokemon.moves[cpu_move]
             print(f"You were hit with {cpu_move} for {cpu_pokemon.moves[cpu_move]} HP! {pokemon.name} has {pokemon.health} health left.")
             if pokemon.health <= 0 and player.bag['potion'] != 0:
+                pokemon.health = 0
                 use = input("Your pokemon is about to faint, do you want to use a potion? (Y or N)")
                 if use.upper() == 'Y':
                     use_potion(player, pokemon)
@@ -250,10 +249,9 @@ def playing_game(player):
     while 0 < len(player.pokemon_list) < 4:
         traverse_grid(grid)
     if len(player.pokemon_list) >= 4:
-        print("Game over! You captured 4 pokemon. Thanks for playing!", ":smile:")
-        print(player.poke_list_names())
+        print(f"Game over! You captured 4 pokemon {player.poke_list_names()}. Thanks for playing!", ":smile:")
     else:
-        print("Game over! You list all of your pokemon. Thanks for playing!", ":smile:")
+        print("Game over! You lost all of your pokemon. Thanks for playing!", ":smile:")
 
 
 # 0 = cant access, 1 =  empty land, 2 = pokemon, 3 = pokeball, 4 = CPU
